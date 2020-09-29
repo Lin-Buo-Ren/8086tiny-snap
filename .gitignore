@@ -1,0 +1,67 @@
+# Git版本控制系統的追蹤排除規則
+# https://git-scm.com/docs/gitignore
+## 不追蹤非例外的Unix系統隱藏檔跟目錄
+.*
+
+## 追蹤Git的專案專屬設定（如 .gitattributes 跟 .gitconfig）
+!.git*
+
+## 追蹤 EditorConfig 配置檔
+## https://editorconfig.org/
+!.editorconfig
+
+## 追蹤 Markdownlint 配置檔
+## https://github.com/DavidAnson/markdownlint
+!/.mdl*
+
+## 追蹤 Drone CI 配置檔
+## https://docs.drone.io/
+!/.drone.yml
+
+## 追蹤 pre-commit 配置檔
+## https://pre-commit.com/
+!/.pre-commit-config.yaml
+
+## 不追蹤常見備份檔
+*~
+*.bak
+*.backup*
+*.old
+*.bk*
+*.orig
+
+## 不追蹤Tar封存檔
+*.tar*
+
+## 不追蹤常見壓縮檔
+*.7z
+*.bz2
+*.gz
+*.xz
+*.zip
+
+## 不追蹤doc-assets目錄以外的常見圖片檔
+*.bmp
+*.jpg
+*.png
+!doc-assets/*
+
+## 不追蹤Markdown的匯出文件格式
+*.doc?
+*.pdf
+
+## 不追蹤程式輸出常見副檔名
+*.log
+*.out
+*.output
+*.err
+*.error
+
+## 不追蹤編譯後的 Python 代碼快取
+*.pyc
+
+## 忽略 Ansible 快取目錄
+/.cache/
+
+## 忽略 Vagrant 環境依賴目錄
+/.vagrant/
