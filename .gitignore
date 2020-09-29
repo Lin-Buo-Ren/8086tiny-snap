@@ -65,3 +65,6 @@
 
 ## 忽略 Vagrant 環境依賴目錄
 /.vagrant/
+
+## Ignore built packages
+*.snap

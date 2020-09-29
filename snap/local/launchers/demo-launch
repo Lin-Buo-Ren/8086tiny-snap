@@ -1,0 +1,19 @@
+#!/bin/sh
+# Launch demo application
+set -eu
+
+clear
+stty cbreak raw -echo min 0
+
+if test -f hd.img; then
+    "${SNAP}"/bin/8086tiny \
+        "${SNAP}"/bios \
+        "${SNAP}"/fd.img \
+        hd.img
+else
+    "${SNAP}"/bin/8086tiny \
+        "${SNAP}"/bios \
+        "${SNAP}"/fd.img
+fi
+
+stty cooked echo

@@ -1,17 +1,159 @@
-name: my-snap-name # you probably want to 'snapcraft register <name>'
-base: core18 # the base snap is the execution environment for this snap
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
-summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+name: 8086tiny
+base: core
+version: '1.25'
+summary: "8086tiny: the world's smallest portable, highly functional PC emulator"
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  8086tiny is a tiny, free, open source, portable Intel PC emulator/VM,
+  powerful enough to run DOS, Windows 3.0, Excel, MS Flight Simulator,
+  AutoCAD, Lotus 1-2-3, and similar applications. 8086tiny emulates a
+  "late 80's era" PC XT-type machine with the following features:
 
-grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+  - Intel 8086/186 CPU
+  - 1MB RAM
+  - 3.5" floppy disk controller (1.44MB/720KB)
+  - Fixed disk controller (supports a single hard drive up to 528MB)
+  - CGA/Hercules graphics card with 720x348 2-color and 320x200 4-color
+    graphics (64KB video RAM), and CGA 80 x 25 16-color text mode support
+  - Accurate programmable interrupt timer (PIT)
+  - Keyboard controller with 83-key XT-style keyboard
+  - Real-time clock
+  - PC speaker
+
+  The emulator uses the SDL graphics library for portability, and compiles
+  under a range of platforms (Windows, Mac OS X, Linux, Android, iOS,
+  Raspberry Pi).
+
+  While 8086tiny as supplied implements only the 8086 instruction set,
+  it can be extended to more complex, modern instruction sets with
+  relative ease.
+
+  **Snap-specific notice**
+
+  This is NOT an official distribution of 8086tiny, for any problem regarding
+  the use of this snap please refer to the snap's own issue tracker:
+
+      https://github.com/Lin-Buo-Ren/8086tiny-snap/issues
+
+grade: stable
+confinement: strict
 
 parts:
-  my-part:
-    # See 'snapcraft plugins'
+  # This part installs the glib dependencies and a `desktop-launch` script to initialise
+  # desktop-specific features such as OpenGL, fonts, themes and the XDG environment.
+  #
+  # It is copied from the snapcraft desktop helpers project and the `source` key is
+  # changed to point to https://github.com/ubuntu/snapcraft-desktop-helpers.git
+  # Please periodically check the desktop helpers repo for updates and copy the changes.
+  #    https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml
+  #
+  desktop-glib-only:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: glib-only
+    source-depth: 1
+    plugin: make
+    build-packages:
+      - libglib2.0-dev
+    stage-packages:
+      - libglib2.0-bin
+
+  launchers:
+    source: snap/local/launchers
+    plugin: dump
+    organize:
+      '*': bin/
+
+  alsa:
     plugin: nil
+    source: https://github.com/diddledan/snapcraft-alsa.git
+    override-pull: |
+      cat > alsa.conf <<EOF
+      pcm.!default {
+        type pulse
+        fallback "sysdefault"
+        hint {
+          show on
+          description "Default ALSA Output (currently PulseAudio Sound Server)"
+        }
+      }
+      ctl.!default {
+        type pulse
+        fallback "sysdefault"
+      }
+      EOF
+    override-build: |
+      install -m644 -D -t $SNAPCRAFT_PART_INSTALL/etc alsa.conf
+    build-packages:
+      - libasound2-dev
+    stage-packages:
+      - libasound2
+      - libasound2-plugins
+      # - alsa-utils # uncomment this to add alsa-utils
+
+  8086tiny:
+    after:
+      - alsa
+    source: https://github.com/adriancable/8086tiny.git
+    source-depth: 1
+    plugin: make
+    build-packages:
+      - gcc
+      - make
+      - libsdl1.2-dev
+    stage-packages:
+      - freeglut3
+      - libdrm2
+      - libgl1-mesa-glx
+      - libglapi-mesa
+      - libglu1-mesa
+      - libsdl1.2debian
+      - libx11-xcb1
+      - libxcb-dri2-0
+      - libxcb-dri3-0
+      - libxcb-glx0
+      - libxcb-present0
+      - libxcb-sync1
+      - libxdamage1
+      - libxfixes3
+      - libxshmfence1
+      - libxxf86vm1
+
+    artifacts:
+      - bios
+      - fd.img
+      - 8086tiny
+
+    organize:
+      8086tiny: bin/8086tiny
+
+apps:
+  8086tiny:
+    adapter: full
+    command: bin/demo-launch
+    command-chain:
+      - bin/desktop-launch
+      - bin/8086tiny-launch
+      - snap/command-chain/alsa-launch
+
+  raw:
+    adapter: full
+    command: bin/raw-launch
+    command-chain:
+      - bin/desktop-launch
+      - bin/8086tiny-launch
+      - snap/command-chain/alsa-launch
+
+plugs:
+  audio-playback:
+  opengl:
+  x11:
+
+  home:
+  removable-media:
+
+layout:
+  /etc/asound.conf:
+    bind-file: $SNAP/etc/alsa.conf
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+  /usr/share/alsa/alsa.conf:
+    bind-file: $SNAP/usr/share/alsa/alsa.conf

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Snap maintainence launcher
+set -eu
+
+"${@}"

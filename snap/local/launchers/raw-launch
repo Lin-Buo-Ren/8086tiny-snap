@@ -1,0 +1,11 @@
+#!/bin/sh
+# Launch raw application
+set -eu
+
+clear
+stty cbreak raw -echo min 0
+
+"${SNAP}"/bin/8086tiny \
+    "${@}"
+
+stty cooked echo
